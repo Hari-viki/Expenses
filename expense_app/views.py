@@ -119,32 +119,33 @@ def home_view(request):
 
 @login_required(login_url='login')
 def expenses_view(request):
+
     months = [(i, calendar.month_abbr[i]) for i in range(1, 13)]
+
     month = request.GET.get('month')
     search = request.GET.get('search')
-    bank = request.GET.get('bank')
+    selected_bank = request.GET.get('bank')
+
     expenses = ExpensesList.objects.filter(user=request.user)
+
+    # 🔹 FILTERS
     if month:
         expenses = expenses.filter(date__month=month)
+
     if search:
         expenses = expenses.filter(description__icontains=search)
-    if bank:
-        expenses = expenses.filter(bank=bank)
+
+    if selected_bank:
+        expenses = expenses.filter(bank__iexact=selected_bank.strip())
+
     expenses = expenses.order_by('-id')
+
     total = expenses.aggregate(total=Sum('amount'))['total'] or 0
 
-    today = datetime.now().day
-    is_first_week = today <= 7
+    # 🔹 BANK DROPDOWN (master)
+    bank_selection = Bank.objects.all()
 
-    current_month = timezone.now().month
-    current_year = timezone.now().year
-
-    last = ExpensesList.objects.filter(
-        user=request.user,
-        date__month=current_month,
-        date__year=current_year
-    ).order_by('-id').first()
-
+    # 🔹 DISTINCT BANK LIST (filter dropdown)
     banks = (
         ExpensesList.objects
         .filter(user=request.user)
@@ -152,44 +153,78 @@ def expenses_view(request):
         .distinct()
     )
 
+    today = datetime.now().day
+    is_first_week = today <= 7
+
+    # 🔥 POST (BANK-WISE LOGIC)
     if request.method == 'POST':
         amount = int(request.POST.get('amount'))
         description = request.POST.get('description')
-        bank = request.POST.get('bank')
+        bank_name = request.POST.get('bank').strip().upper()
+
+        current_month = timezone.now().month
+        current_year = timezone.now().year
+
+        # ✅ BANK-WISE LAST RECORD
+        last = ExpensesList.objects.filter(
+            user=request.user,
+            bank__iexact=bank_name,
+            date__month=current_month,
+            date__year=current_year
+        ).order_by('-id').first()
+
         if last:
             total_amount = last.total_amount
             balance = last.balance_amount - amount
         else:
             total_amount = int(request.POST.get('total_amount'))
             balance = total_amount - amount
+
         exp = ExpensesList.objects.create(
             user=request.user,
-            bank=bank,  # ✅ SAVE BANK
+            bank=bank_name,
             amount=amount,
             total_amount=total_amount,
             balance_amount=balance,
             description=description,
             date=timezone.now()
         )
+
         new_total = ExpensesList.objects.filter(user=request.user).aggregate(
             total=Sum('amount')
         )['total'] or 0
+
         return JsonResponse({
-            'date': exp.date.strftime("%Y-%m-%d"),
+            'date': exp.date.strftime("%b %d, %Y"),
             'total_amount': exp.total_amount,
             'amount': exp.amount,
             'balance': exp.balance_amount,
             'description': exp.description,
-            'bank': exp.bank,  # ✅ RETURN BANK
+            'bank': exp.bank,
             'total_spent': new_total
         })
+
     return render(request, 'web/expenses.html', {
         'expenses': expenses,
         'months': months,
         'total_spent': total,
         'is_first_week': is_first_week,
-        'last': last,
-        'banks': banks  # ✅ PASS BANKS
+        'banks': banks,
+        'bank_selection': bank_selection,
+        'selected_bank': selected_bank
+    })
+
+@login_required
+def get_bank_total(request):
+    bank = request.GET.get('bank')
+
+    last = ExpensesList.objects.filter(
+        user=request.user,
+        bank__iexact=bank
+    ).order_by('-id').first()
+
+    return JsonResponse({
+        'total': last.total_amount if last else ''
     })
 
 @login_required(login_url='login')

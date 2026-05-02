@@ -20,18 +20,17 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Total Amount</label>
                         <input type="number"
-                               name="total_amount"
-                               id="totalInput"
-                               class="form-control"
-                               value="{% if last %}{{ last.total_amount }}{% endif %}"
-                               {% if not is_first_week and last %}readonly{% endif %}>
-                        <small class="text-muted">
+                            name="total_amount"
+                            id="totalInput"
+                            class="form-control"
+                            placeholder="Enter total for selected bank">
+                        <!-- <small class="text-muted">
                             {% if is_first_week %}
                                 Editable (First week)
                             {% else %}
                                 Locked after first week
                             {% endif %}
-                        </small>
+                        </small> -->
                     </div>
 
                     <div class="mb-3">
@@ -47,7 +46,7 @@
                         <label class="form-label">Select Bank</label>
                         <select name="bank" class="form-select" required>
                             <option value="">-- Select Bank --</option>
-                            {% for bank in banks %}
+                            {% for bank in bank_selection %}
                                 <option value="{{ bank.name }}">{{ bank.name }}</option>
                             {% endfor %}
                         </select>
@@ -83,7 +82,7 @@
                                 <option value="">All Banks</option>
                                 {% for b in banks %}
                                 <option value="{{ b }}"
-                                    {% if request.GET.bank == b %}selected{% endif %}>
+                                    {% if selected_bank|lower == b|lower %}selected{% endif %}>
                                     {{ b }}
                                 </option>
                                 {% endfor %}
@@ -172,10 +171,10 @@ document.getElementById("expenseForm").addEventListener("submit", function(e) {
         const row = `
             <tr>
                 <td>${data.date}</td>
-                <td>${data.bank}</td>
                 <td>₹ ${data.total_amount}</td>
                 <td class="text-danger fw-semibold">₹ ${data.amount}</td>
                 <td class="text-success fw-semibold">₹ ${data.balance}</td>
+                <td>${data.bank}</td>
                 <td>${data.description}</td>
             </tr>
         `;
