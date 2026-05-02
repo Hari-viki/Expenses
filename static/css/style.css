@@ -1,0 +1,254 @@
+/* ===== Reset ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'DM Sans', sans-serif;
+    background-color: #f5f7fb;
+    color: #1f2937;
+}
+
+/* ===== Navbar ===== */
+.navbar {
+    background: #111827;
+    padding: 14px 20px;
+}
+
+.nav-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Brand */
+.brand {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.brand-dot {
+    width: 10px;
+    height: 10px;
+    background: #6366f1;
+    border-radius: 50%;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.brand-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    color: #fff;
+    font-size: 20px;
+}
+
+/* Nav Links */
+.nav-links {
+    display: flex;
+    list-style: none;
+    gap: 25px;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-link {
+    color: #d1d5db;
+    text-decoration: none;
+    font-size: 15px;
+    transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #ffffff;
+}
+
+.nav-link.active {
+    color: #6366f1;
+    font-weight: 500;
+}
+
+.logout-link {
+    color: #f87171 !important;
+}
+
+/* ===== Hamburger Button ===== */
+.hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 26px;
+    height: 20px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    gap: 0;
+}
+
+.hamburger span {
+    display: block;
+    height: 2px;
+    width: 100%;
+    background: #d1d5db;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+/* Hamburger → X animation */
+.hamburger.active span:nth-child(1) {
+    transform: translateY(9px) rotate(45deg);
+}
+.hamburger.active span:nth-child(2) {
+    opacity: 0;
+}
+.hamburger.active span:nth-child(3) {
+    transform: translateY(-9px) rotate(-45deg);
+}
+
+/* ===== Mobile Menu ===== */
+.mobile-menu {
+    display: none;
+    flex-direction: column;
+    background: #1f2937;
+    padding: 0 20px;
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+}
+
+.mobile-menu.open {
+    display: flex;
+    max-height: 400px;
+    padding: 10px 20px 16px;
+}
+
+.mobile-menu .nav-link {
+    padding: 12px 0;
+    border-bottom: 1px solid #374151;
+    font-size: 15px;
+}
+
+.mobile-menu .nav-link:last-child {
+    border-bottom: none;
+}
+
+/* ===== Page Container ===== */
+.page-container {
+    max-width: 900px;
+    margin: 30px auto;
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.07);
+}
+
+/* ===== Forms ===== */
+form div {
+    margin-bottom: 15px;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"] {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    outline: none;
+    font-size: 14px;
+}
+
+input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+}
+
+/* Buttons */
+button[type="submit"],
+button:not(.hamburger) {
+    background: #6366f1;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s;
+    font-size: 14px;
+}
+
+button[type="submit"]:hover,
+button:not(.hamburger):hover {
+    background: #4f46e5;
+}
+
+/* Messages */
+p {
+    margin-top: 10px;
+    font-size: 14px;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+
+    /* Show hamburger, hide desktop nav */
+    .hamburger {
+        display: flex;
+    }
+
+    .nav-links {
+        display: none;
+    }
+
+    /* Page padding on small screens */
+    .page-container {
+        margin: 16px;
+        padding: 16px;
+    }
+
+    /* Make Bootstrap container full-width on mobile */
+    .container {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
+
+    /* Cards padding */
+    .card {
+        padding: 12px !important;
+    }
+
+    /* Table: ensure horizontal scroll */
+    .table-responsive {
+        border-radius: 8px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Shrink table font on mobile */
+    .table {
+        font-size: 13px;
+        min-width: 480px;
+    }
+
+    /* Chart max height on mobile */
+    #expenseChart {
+        max-height: 260px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .brand-name {
+        font-size: 17px;
+    }
+
+    .table {
+        font-size: 12px;
+        min-width: 420px;
+    }
+}

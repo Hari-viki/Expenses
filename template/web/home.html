@@ -1,0 +1,118 @@
+{% extends 'layout/layout.html' %}
+{% load static %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <h4 class="text-center mb-4">
+        📊 {{ month_name }} Dashboard
+    </h4>
+
+    <div class="row g-3">
+
+        <!-- 📊 BAR CHART -->
+        <div class="col-12 col-md-6 d-flex">
+            <div class="card chart-card shadow-sm w-100">
+                <h6 class="text-center">Income vs Expense</h6>
+                <div class="chart-box">
+                    <canvas id="barChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🥧 EXPENSE PIE -->
+        <div class="col-12 col-md-6 d-flex">
+            <div class="card chart-card shadow-sm w-100">
+                <h6 class="text-center">Expense Categories</h6>
+                <div class="chart-box">
+                    <canvas id="expensePie"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- 🥧 INCOME PIE -->
+        <div class="col-12 col-md-6 d-flex">
+            <div class="card chart-card shadow-sm w-100">
+                <h6 class="text-center">Income Categories</h6>
+                <div class="chart-box">
+                    <canvas id="incomePie"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- 🔥 JSON DATA -->
+{{ labels|json_script:"labels-data" }}
+{{ expense_data|json_script:"expense-data" }}
+{{ income_data|json_script:"income-data" }}
+{{ pie_exp_labels|json_script:"pie-exp-labels" }}
+{{ pie_exp_values|json_script:"pie-exp-values" }}
+{{ pie_inc_labels|json_script:"pie-inc-labels" }}
+{{ pie_inc_values|json_script:"pie-inc-values" }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+// DATA
+const labels = JSON.parse(document.getElementById('labels-data').textContent);
+const expense = JSON.parse(document.getElementById('expense-data').textContent);
+const income = JSON.parse(document.getElementById('income-data').textContent);
+
+// 📊 BAR
+new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: {
+        labels: labels,
+        datasets: [
+            { label: 'Expense', data: expense, backgroundColor: '#ef4444' },
+            { label: 'Income', data: income, backgroundColor: '#22c55e' }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false
+    }
+});
+
+// 🥧 EXPENSE PIE
+new Chart(document.getElementById('expensePie'), {
+    type: 'pie',
+    data: {
+        labels: JSON.parse(document.getElementById('pie-exp-labels').textContent),
+        datasets: [{
+            data: JSON.parse(document.getElementById('pie-exp-values').textContent),
+            backgroundColor: ['#ef4444','#f59e0b','#3b82f6','#8b5cf6','#10b981']
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false
+    }
+});
+
+// 🥧 INCOME PIE
+new Chart(document.getElementById('incomePie'), {
+    type: 'pie',
+    data: {
+        labels: JSON.parse(document.getElementById('pie-inc-labels').textContent),
+        datasets: [{
+            data: JSON.parse(document.getElementById('pie-inc-values').textContent),
+            backgroundColor: ['#22c55e','#06b6d4','#a855f7','#eab308','#f97316']
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false
+    }
+});
+
+</script>
+
+{% endblock %}

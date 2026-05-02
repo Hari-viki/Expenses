@@ -1,0 +1,190 @@
+{% extends 'layout/layout.html' %}
+{% load static %}
+
+{% block title %}Expenses{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-7">
+
+            <h4 class="mb-4 text-center">Expenses</h4>
+
+            <!-- ➕ ADD EXPENSE FORM -->
+            <div class="card p-3 mb-4 shadow-sm">
+                <form method="POST" id="expenseForm">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Total Amount</label>
+                        <input type="number"
+                               name="total_amount"
+                               id="totalInput"
+                               class="form-control"
+                               value="{% if last %}{{ last.total_amount }}{% endif %}"
+                               {% if not is_first_week and last %}readonly{% endif %}>
+                        <small class="text-muted">
+                            {% if is_first_week %}
+                                Editable (First week)
+                            {% else %}
+                                Locked after first week
+                            {% endif %}
+                        </small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Expense Amount</label>
+                        <input type="number" name="amount" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Description</label>
+                        <input type="text" name="description" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Select Bank</label>
+                        <select name="bank" class="form-select" required>
+                            <option value="">-- Select Bank --</option>
+                            {% for bank in banks %}
+                                <option value="{{ bank.name }}">{{ bank.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Add Expense</button>
+                </form>
+            </div>
+
+            <!-- FILTER FORM -->
+            <div class="card p-3 mb-4 shadow-sm">
+                <form method="GET">
+                    <div class="row g-2 align-items-end">
+
+                        <!-- MONTH -->
+                        <div class="col-12 col-sm-3">
+                            <label class="form-label fw-semibold mb-1">Month</label>
+                            <select name="month" class="form-select">
+                                <option value="">All Months</option>
+                                {% for num, name in months %}
+                                <option value="{{ num }}"
+                                    {% if request.GET.month == num|stringformat:"s" %}selected{% endif %}>
+                                    {{ name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- BANK -->
+                        <div class="col-12 col-sm-3">
+                            <label class="form-label fw-semibold mb-1">Bank</label>
+                            <select name="bank" class="form-select">
+                                <option value="">All Banks</option>
+                                {% for b in banks %}
+                                <option value="{{ b }}"
+                                    {% if request.GET.bank == b %}selected{% endif %}>
+                                    {{ b }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- SEARCH -->
+                        <div class="col-12 col-sm-4">
+                            <label class="form-label fw-semibold mb-1">Search</label>
+                            <input type="text"
+                                name="search"
+                                value="{{ request.GET.search }}"
+                                placeholder="Search description..."
+                                class="form-control">
+                        </div>
+
+                        <!-- BUTTONS -->
+                        <div class="col-6 col-sm-2 d-grid gap-1">
+                            <button type="submit" class="btn btn-primary btn-sm">Search</button>
+                            <a href="{% url 'expenses' %}" class="btn btn-secondary btn-sm text-center">Reset</a>
+                        </div>
+
+                    </div>
+                </form>
+
+                <!-- TOTAL -->
+                <div class="alert alert-info text-center mt-3 mb-0 py-2">
+                    Total Spent: ₹ <strong><span id="totalBox">{{ total_spent }}</span></strong>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- EXPENSE TABLE — full width, scrollable on mobile -->
+    <div class="table-responsive rounded shadow-sm mb-4">
+        <table class="table table-bordered text-center mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>Date</th>
+                    <th>Total</th>
+                    <th>Expense</th>
+                    <th>Balance</th>
+                    <th>Bank</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody id="expenseTable">
+                {% for exp in expenses %}
+                <tr>
+                    <td>{{ exp.date }}</td>
+                    <td>₹ {{ exp.total_amount }}</td>
+                    <td class="text-danger fw-semibold">₹ {{ exp.amount }}</td>
+                    <td class="text-success fw-semibold">₹ {{ exp.balance_amount }}</td>
+                    <td>{{ exp.bank }}</td>
+                    <td>{{ exp.description }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-muted py-4">No expenses found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<!-- AJAX Submit -->
+<script>
+document.getElementById("expenseForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    const form = this;
+    const formData = new FormData(form);
+
+    fetch("", {
+        method: "POST",
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        const row = `
+            <tr>
+                <td>${data.date}</td>
+                <td>${data.bank}</td>
+                <td>₹ ${data.total_amount}</td>
+                <td class="text-danger fw-semibold">₹ ${data.amount}</td>
+                <td class="text-success fw-semibold">₹ ${data.balance}</td>
+                <td>${data.description}</td>
+            </tr>
+        `;
+        document.getElementById("expenseTable").insertAdjacentHTML("afterbegin", row);
+        document.getElementById("totalBox").innerText = data.total_spent;
+        form.reset();
+    })
+    .catch(err => console.error("Submit error:", err));
+});
+</script>
+
+{% endblock %}
