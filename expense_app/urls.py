@@ -8,6 +8,6 @@ urlpatterns=[
     path('logout', views.logout_view, name='logout'),
     path('expenses', views.expenses_view, name='expenses'),
     path('bike_expenses', views.bike_expenses_view, name='bike_expenses'),
-    path('get-bank-total', views.get_bank_total, name='get_bank_total'),
+    path('get-bank-total/', views.get_bank_total, name='get_bank_total'),
 
 ]

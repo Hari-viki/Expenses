@@ -44,7 +44,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Select Bank</label>
-                        <select name="bank" class="form-select" required>
+                        <select name="bank" id="bankSelect" class="form-select" required>
                             <option value="">-- Select Bank --</option>
                             {% for bank in bank_selection %}
                                 <option value="{{ bank.name }}">{{ bank.name }}</option>
@@ -183,6 +183,34 @@ document.getElementById("expenseForm").addEventListener("submit", function(e) {
         form.reset();
     })
     .catch(err => console.error("Submit error:", err));
+});
+
+document.getElementById('bankSelect').addEventListener('change', function () {
+
+    const bank = this.value;
+
+    if (!bank) return;
+
+    const url = "{% url 'get_bank_total' %}";
+
+    fetch(`${url}?bank=${bank}`)
+    .then(response => response.json())
+    .then(data => {
+
+        const totalInput = document.getElementById('totalInput');
+
+        // ✅ SET VALUE (IMPORTANT FIX)
+        totalInput.value = data.total || '';
+
+        // ✅ CONTROL EDITABLE
+        // if (data.total) {
+        //     totalInput.readOnly = true;
+        // } else {
+        //     totalInput.readOnly = false;
+        // }
+
+    })
+    .catch(err => console.error("Error:", err));
 });
 </script>
 

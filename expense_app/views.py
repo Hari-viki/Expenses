@@ -141,11 +141,7 @@ def expenses_view(request):
     expenses = expenses.order_by('-id')
 
     total = expenses.aggregate(total=Sum('amount'))['total'] or 0
-
-    # 🔹 BANK DROPDOWN (master)
     bank_selection = Bank.objects.all()
-
-    # 🔹 DISTINCT BANK LIST (filter dropdown)
     banks = (
         ExpensesList.objects
         .filter(user=request.user)
@@ -156,11 +152,11 @@ def expenses_view(request):
     today = datetime.now().day
     is_first_week = today <= 7
 
-    # 🔥 POST (BANK-WISE LOGIC)
     if request.method == 'POST':
         amount = int(request.POST.get('amount'))
         description = request.POST.get('description')
         bank_name = request.POST.get('bank').strip().upper()
+        entered_total = request.POST.get('total_amount')
 
         current_month = timezone.now().month
         current_year = timezone.now().year
@@ -174,10 +170,13 @@ def expenses_view(request):
         ).order_by('-id').first()
 
         if last:
-            total_amount = last.total_amount
-            balance = last.balance_amount - amount
+            if entered_total:   # user changed total
+                total_amount = int(entered_total)
+            else:
+                total_amount = last.total_amount
+            balance = total_amount - amount
         else:
-            total_amount = int(request.POST.get('total_amount'))
+            total_amount = int(entered_total)
             balance = total_amount - amount
 
         exp = ExpensesList.objects.create(
