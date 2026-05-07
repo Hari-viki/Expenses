@@ -231,15 +231,19 @@ def expenses_view(request):
 
 @login_required
 def get_bank_total(request):
-    bank = request.GET.get('bank')
-
+    bank = request.GET.get('bank', '').strip()
     last = ExpensesList.objects.filter(
         user=request.user,
         bank__iexact=bank
     ).order_by('-id').first()
-
+    total_amount = 0
+    current_balance = 0
+    if last:
+        total_amount = last.total_amount
+        current_balance = last.balance_amount
     return JsonResponse({
-        'total': last.total_amount if last else ''
+        'total': total_amount,
+        'balance': current_balance
     })
 
 @login_required(login_url='login')

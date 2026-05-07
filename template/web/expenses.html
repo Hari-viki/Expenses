@@ -27,20 +27,26 @@
                         </select>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Total Amount</label>
-                        <input type="number"
-                            name="total_amount"
-                            id="totalInput"
-                            class="form-control"
-                            placeholder="Enter total for selected bank">
-                        <!-- <small class="text-muted">
-                            {% if is_first_week %}
-                                Editable (First week)
-                            {% else %}
-                                Locked after first week
-                            {% endif %}
-                        </small> -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">
+                                Total Amount
+                            </label>
+                            <input type="number"
+                                name="total_amount"
+                                id="totalInput"
+                                class="form-control"
+                                placeholder="Enter amount to add">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">
+                                Current Balance
+                            </label>
+                            <input type="number"
+                                id="currentBalance"
+                                class="form-control"
+                                readonly>
+                        </div>
                     </div>
 
                     <div class="mb-3">
@@ -188,30 +194,24 @@ document.getElementById("expenseForm").addEventListener("submit", function(e) {
 
 document.getElementById('bankSelect').addEventListener('change', function () {
 
-    const bank = this.value;
+    let bank = this.value;
 
     if (!bank) return;
 
-    const url = "{% url 'get_bank_total' %}";
+    fetch(`/get-bank-total/?bank=${bank}`)
+        .then(response => response.json())
+        .then(data => {
 
-    fetch(`${url}?bank=${bank}`)
-    .then(response => response.json())
-    .then(data => {
+            // ✅ Total Amount
+            document.getElementById('totalInput').value =
+                data.total || 0;
 
-        const totalInput = document.getElementById('totalInput');
+            // ✅ Current Balance
+            document.getElementById('currentBalance').value =
+                data.balance || 0;
 
-        // ✅ SET VALUE (IMPORTANT FIX)
-        totalInput.value = data.total || '';
+        });
 
-        // ✅ CONTROL EDITABLE
-        // if (data.total) {
-        //     totalInput.readOnly = true;
-        // } else {
-        //     totalInput.readOnly = false;
-        // }
-
-    })
-    .catch(err => console.error("Error:", err));
 });
 </script>
 
