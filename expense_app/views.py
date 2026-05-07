@@ -186,9 +186,9 @@ def expenses_view(request):
             balance = total_amount - amount
 
         else:
-            if entered_total is not None:
+            if entered_total is not None and entered_total > 0 and amount == 0:
                 total_amount = entered_total
-                balance = total_amount - amount
+                balance = total_amount
             else:
                 total_amount = int(last.total_amount)
                 balance = int(last.balance_amount) - amount
