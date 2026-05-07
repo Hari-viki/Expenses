@@ -18,6 +18,16 @@
                     {% csrf_token %}
 
                     <div class="mb-3">
+                        <label class="form-label">Select Bank</label>
+                        <select name="bank" id="bankSelect" class="form-select" required>
+                            <option value="">-- Select Bank --</option>
+                            {% for bank in bank_selection %}
+                                <option value="{{ bank.name }}">{{ bank.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
                         <label class="form-label fw-semibold">Total Amount</label>
                         <input type="number"
                             name="total_amount"
@@ -41,15 +51,6 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Description</label>
                         <input type="text" name="description" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Select Bank</label>
-                        <select name="bank" id="bankSelect" class="form-select" required>
-                            <option value="">-- Select Bank --</option>
-                            {% for bank in bank_selection %}
-                                <option value="{{ bank.name }}">{{ bank.name }}</option>
-                            {% endfor %}
-                        </select>
                     </div>
 
                     <button type="submit" class="btn btn-primary w-100">Add Expense</button>

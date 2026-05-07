@@ -119,28 +119,21 @@ def home_view(request):
 
 @login_required(login_url='login')
 def expenses_view(request):
-
     months = [(i, calendar.month_abbr[i]) for i in range(1, 13)]
-
     month = request.GET.get('month')
     search = request.GET.get('search')
     selected_bank = request.GET.get('bank')
-
     expenses = ExpensesList.objects.filter(user=request.user)
-
-    # 🔹 FILTERS
     if month:
         expenses = expenses.filter(date__month=month)
-
     if search:
         expenses = expenses.filter(description__icontains=search)
-
     if selected_bank:
         expenses = expenses.filter(bank__iexact=selected_bank.strip())
-
     expenses = expenses.order_by('-id')
-
-    total = expenses.aggregate(total=Sum('amount'))['total'] or 0
+    total = expenses.aggregate(
+        total=Sum('amount')
+    )['total'] or 0
     bank_selection = Bank.objects.all()
     banks = (
         ExpensesList.objects
@@ -148,21 +141,34 @@ def expenses_view(request):
         .values_list('bank', flat=True)
         .distinct()
     )
-
     today = datetime.now().day
     is_first_week = today <= 7
 
     if request.method == 'POST':
-        amount = int(request.POST.get('amount'))
-        description = request.POST.get('description')
-        bank_name = request.POST.get('bank').strip().upper()
+        try:
+            amount = int(request.POST.get('amount', 0))
+            if amount < 0:
+                return JsonResponse({
+                    'error': 'Expense amount cannot be negative'
+                }, status=400)
+        except ValueError:
+            return JsonResponse({
+                'error': 'Invalid amount'
+            }, status=400)
+        description = request.POST.get('description', '').strip()
+        bank_name = request.POST.get(
+            'bank',
+            ''
+        ).strip().upper()
         entered_total = request.POST.get('total_amount')
-        entered_total = int(entered_total) if entered_total and entered_total.strip() else None
-
+        entered_total = (
+            int(entered_total)
+            if entered_total and entered_total.strip()
+            else None
+        )
         current_month = timezone.now().month
         current_year = timezone.now().year
 
-        # ✅ BANK-WISE LAST RECORD
         last = ExpensesList.objects.filter(
             user=request.user,
             bank__iexact=bank_name,
@@ -170,21 +176,22 @@ def expenses_view(request):
             date__year=current_year
         ).order_by('-id').first()
 
-        if last:
-            total_amount = entered_total if entered_total is not None else int(last.total_amount)
-
-            # Use previous balance
-            previous_balance = int(last.balance_amount)
-            balance = previous_balance - amount
-
-        else:
+        if not last:
             if entered_total is None:
-                return JsonResponse({'error': 'Total required'}, status=400)
+                return JsonResponse({
+                    'error': 'Total amount required for first entry'
+                }, status=400)
 
             total_amount = entered_total
-
-            # First entry
             balance = total_amount - amount
+
+        else:
+            if entered_total is not None:
+                total_amount = entered_total
+                balance = total_amount - amount
+            else:
+                total_amount = int(last.total_amount)
+                balance = int(last.balance_amount) - amount
 
         exp = ExpensesList.objects.create(
             user=request.user,
@@ -196,7 +203,9 @@ def expenses_view(request):
             date=timezone.now()
         )
 
-        new_total = ExpensesList.objects.filter(user=request.user).aggregate(
+        new_total = ExpensesList.objects.filter(
+            user=request.user
+        ).aggregate(
             total=Sum('amount')
         )['total'] or 0
 
