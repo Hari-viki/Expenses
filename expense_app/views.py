@@ -157,6 +157,7 @@ def expenses_view(request):
         description = request.POST.get('description')
         bank_name = request.POST.get('bank').strip().upper()
         entered_total = request.POST.get('total_amount')
+        entered_total = int(entered_total) if entered_total and entered_total.strip() else None
 
         current_month = timezone.now().month
         current_year = timezone.now().year
@@ -170,13 +171,19 @@ def expenses_view(request):
         ).order_by('-id').first()
 
         if last:
-            if entered_total:   # user changed total
-                total_amount = int(entered_total)
-            else:
-                total_amount = last.total_amount
-            balance = total_amount - amount
+            total_amount = entered_total if entered_total is not None else int(last.total_amount)
+
+            # Use previous balance
+            previous_balance = int(last.balance_amount)
+            balance = previous_balance - amount
+
         else:
-            total_amount = int(entered_total)
+            if entered_total is None:
+                return JsonResponse({'error': 'Total required'}, status=400)
+
+            total_amount = entered_total
+
+            # First entry
             balance = total_amount - amount
 
         exp = ExpensesList.objects.create(
