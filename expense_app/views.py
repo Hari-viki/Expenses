@@ -331,3 +331,72 @@ def expense_report(request):
         'total_extra':   total_extra,
         'total_count':   expenses.count(),
     })
+
+@login_required(login_url='login')
+def self_transfer(request):
+
+    if request.method == 'POST':
+
+        from_bank = request.POST.get('from_bank')
+        to_bank = request.POST.get('to_bank')
+
+        # IMPORTANT FIX
+        amount = int(request.POST.get('amount'))
+
+        # SAME BANK VALIDATION
+        if from_bank == to_bank:
+            messages.error(request, "Both banks cannot be same")
+            return redirect('expenses')
+
+        # FROM BANK LAST ENTRY
+        from_last = ExpensesList.objects.filter(
+            user=request.user,
+            bank=from_bank
+        ).order_by('-id').first()
+
+        from_current_balance = (
+            from_last.balance_amount if from_last else 0
+        )
+
+        # INSUFFICIENT BALANCE
+        if amount > from_current_balance:
+            messages.error(request, "Insufficient Balance")
+            return redirect('expenses')
+
+        # TO BANK LAST ENTRY
+        to_last = ExpensesList.objects.filter(
+            user=request.user,
+            bank=to_bank
+        ).order_by('-id').first()
+
+        to_current_balance = (
+            to_last.balance_amount if to_last else 0
+        )
+
+        # NEW BALANCES
+        from_new_balance = from_current_balance - amount
+        to_new_balance = to_current_balance + amount
+
+        # DEBIT ENTRY
+        ExpensesList.objects.create(
+            user=request.user,
+            bank=from_bank,
+            amount=amount,
+            extra_amount=0,
+            total_amount=from_current_balance,
+            balance_amount=from_new_balance,
+            description=f"Transferred to {to_bank}"
+        )
+
+        # CREDIT ENTRY
+        ExpensesList.objects.create(
+            user=request.user,
+            bank=to_bank,
+            amount=0,
+            extra_amount=amount,
+            total_amount=to_current_balance,
+            balance_amount=to_new_balance,
+            description=f"Received from {from_bank}"
+        )
+        return redirect('expenses')
+    return redirect('expenses')

@@ -71,7 +71,22 @@
                         <input type="text" name="description" class="form-control" required>
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100">Add Expense</button>
+                    <div class="row g-3">
+                        
+                        <div class="col-6">
+                            <button type="submit" class="btn btn-primary w-100">
+                                Add Expense
+                            </button>
+                        </div>
+
+                        <div class="col-6">
+                            <button type="button"  class="btn btn-success w-100"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#transferModal">
+                                Self Transfer
+                            </button>
+                        </div>
+                    </div>
                 </form>
             </div>
 
@@ -133,6 +148,68 @@
                 </div>
             </div>
 
+        </div>
+    </div>
+
+    <div class="modal fade" id="transferModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                {% if messages %}
+                    <div class="p-3">
+                        {% for message in messages %}
+                            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}success{% endif %} alert-dismissible fade show"
+                                role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert">
+                                </button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <div class="modal-header">
+                    <h5 class="modal-title"> Self Transfer </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="{% url 'self_transfer' %}">
+                    {% csrf_token %}
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label"> From Bank </label>
+                            <select name="from_bank" class="form-select" required>
+                                {% for bank in bank_selection %}
+                                <option value="{{ bank.name }}">
+                                    {{ bank.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label"> To Bank </label>
+                            <select name="to_bank" class="form-select" required>
+                                {% for bank in bank_selection %}
+                                <option value="{{ bank.name }}">
+                                    {{ bank.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label"> Amount </label>
+                            <input type="number" name="amount" class="form-control"
+                                placeholder="Enter Amount" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary"
+                                data-bs-dismiss="modal">
+                            Close
+                        </button>
+                        <button type="submit" class="btn btn-success">
+                            Transfer
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -233,6 +310,24 @@ document.getElementById('bankSelect').addEventListener('change', function () {
         });
 
 });
+
 </script>
 
+{% if messages %}
+
+<script>
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const transferModal = new bootstrap.Modal(
+            document.getElementById('transferModal')
+        );
+
+        transferModal.show();
+
+    });
+
+</script>
+
+{% endif %}
 {% endblock %}

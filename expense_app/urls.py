@@ -10,5 +10,6 @@ urlpatterns=[
     path('bike_expenses', views.bike_expenses_view, name='bike_expenses'),
     path('report_expense', views.expense_report, name='report_expense'),
     path('get-bank-total/', views.get_bank_total, name='get_bank_total'),
+    path('self-transfer/', views.self_transfer, name='self_transfer'),
 
 ]
