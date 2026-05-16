@@ -28,7 +28,7 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-6 mb-3 {% if not is_first_week %}d-none{% endif %}">
                             <label class="form-label fw-semibold">
                                 Total Amount
                             </label>
@@ -36,8 +36,10 @@
                                 name="total_amount"
                                 id="totalInput"
                                 class="form-control"
-                                placeholder="Enter amount to add">
+                                placeholder="Enter amount to add"
+                                {% if not is_first_week %}tabindex="-1"{% endif %}>
                         </div>
+
                         <div class="col-md-6 mb-3">
                             <label class="form-label fw-semibold">
                                 Current Balance
@@ -46,6 +48,16 @@
                                 id="currentBalance"
                                 class="form-control"
                                 readonly>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">
+                                Extra Amount
+                            </label>
+                            <input type="number"
+                                name="extra_amount"
+                                class="form-control"
+                                placeholder="Enter Extra Amount to add">
                         </div>
                     </div>
 
@@ -130,7 +142,8 @@
             <thead class="table-dark">
                 <tr>
                     <th>Date</th>
-                    <th>Total</th>
+                    <!-- <th>Total</th> -->
+                    <th>Extra Amount</th>
                     <th>Expense</th>
                     <th>Balance</th>
                     <th>Bank</th>
@@ -141,7 +154,10 @@
                 {% for exp in expenses %}
                 <tr>
                     <td>{{ exp.date }}</td>
-                    <td>₹ {{ exp.total_amount }}</td>
+                    <!-- <td>₹ {{ exp.total_amount }}</td> -->
+                     <td class="text-primary fw-semibold">
+                        ₹ {{ exp.extra_amount }}
+                    </td>
                     <td class="text-danger fw-semibold">₹ {{ exp.amount }}</td>
                     <td class="text-success fw-semibold">₹ {{ exp.balance_amount }}</td>
                     <td>{{ exp.bank }}</td>
@@ -179,6 +195,10 @@ document.getElementById("expenseForm").addEventListener("submit", function(e) {
             <tr>
                 <td>${data.date}</td>
                 <td>₹ ${data.total_amount}</td>
+                <td class="text-primary fw-semibold">
+                    ₹ ${data.extra_amount}
+                </td>
+
                 <td class="text-danger fw-semibold">₹ ${data.amount}</td>
                 <td class="text-success fw-semibold">₹ ${data.balance}</td>
                 <td>${data.bank}</td>

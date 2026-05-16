@@ -10,7 +10,7 @@ class CustomUserAdmin(admin.ModelAdmin):
 
 @admin.register(ExpensesList)
 class ExpensesListAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'total_amount', 'amount', 'balance_amount', 'bank', 'description', 'date')
+    list_display = ('id', 'user', 'total_amount', 'amount', 'balance_amount', 'extra_amount', 'bank', 'description', 'date')
     list_filter = ('date',)
     search_fields = ('description',)
 

@@ -12,16 +12,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    {% block extra_css %}{% endblock %}
 </head>
 
 <body>
 
     {% include 'nav/nav.html' %}  <!-- 🔥 match folder -->
 
-    <main>
-        {% block content %}
-        {% endblock %}
-    </main>
+    <div class="app-shell">
+        <div class="shell-sidebar-spacer" id="shellSpacer"></div>
+            <main class="shell-main">
+            {% block content %}{% endblock %}
+            </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
 
 </body>
 </html>

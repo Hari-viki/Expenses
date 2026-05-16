@@ -4,8 +4,11 @@ from django.utils import timezone
 from django.conf import settings
 
 class CustomUser(AbstractUser):
-    # You can add extra fields here if needed
-    pass
+    profile_picture = models.ImageField(
+        upload_to='profile_pics/',
+        null=True,
+        blank=True
+    )
 
 class Bank(models.Model):
     name = models.CharField(max_length=100)
@@ -20,6 +23,7 @@ class ExpensesList(models.Model):
     total_amount = models.BigIntegerField(default=0)
     amount = models.BigIntegerField()
     balance_amount = models.BigIntegerField()
+    extra_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     description = models.CharField(max_length=1000)
 
     def __str__(self):

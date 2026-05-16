@@ -15,7 +15,14 @@
 
     <form method="POST">
         {% csrf_token %}
-
+        <div>
+        <label class="form-label">Profile Picture <span class="text-muted">(optional)</span></label>
+            <input type="file"
+                name="profile_picture"
+                id="profilePicInput"
+                class="form-control"
+                accept="image/*">
+        </div>
         <div>
             <label>Username</label><br>
             <input type="text" name="username" required>
