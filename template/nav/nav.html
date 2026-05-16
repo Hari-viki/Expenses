@@ -36,7 +36,11 @@
       </a>
       <a href="{% url 'expenses' %}"
          class="sidebar-link {% if request.resolver_match.url_name == 'expenses' %}active{% endif %}">
-        Expenses
+        Expense
+      </a>
+      <a href="{% url 'report_expense' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'report_expense' %}active{% endif %}">
+        Report
       </a>
       <a href="{% url 'logout' %}" class="sidebar-link sidebar-logout">Logout</a>
     {% else %}

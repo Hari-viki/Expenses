@@ -1,0 +1,168 @@
+{% extends 'layout/layout.html' %}
+{% load static %}
+
+{% block title %}Expense Report{% endblock %}
+
+{% block content %}
+<div style="max-width:1100px; margin:0 auto;">
+
+  <!-- Header -->
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; flex-wrap:wrap; gap:12px;">
+    <h2 style="font-size:20px; font-weight:700; color:#1f2937;">
+      Expense Report
+    </h2>
+    <button onclick="window.print()" class="btn-primary-app" style="display:flex; align-items:center; gap:6px;">
+      🖨 Print / Export
+    </button>
+  </div>
+
+  <!-- Filter Card -->
+  <div class="card no-print" style="margin-bottom:1.25rem;">
+    <form method="GET" action="{% url 'report_expense' %}">
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:12px; align-items:flex-end;">
+
+        <div>
+          <label style="font-size:12px; color:#6b7280; font-weight:600; display:block; margin-bottom:4px;">
+            From Date
+          </label>
+          <input type="date" name="from_date" value="{{ from_date }}">
+        </div>
+
+        <div>
+          <label style="font-size:12px; color:#6b7280; font-weight:600; display:block; margin-bottom:4px;">
+            To Date
+          </label>
+          <input type="date" name="to_date" value="{{ to_date }}">
+        </div>
+
+        <div>
+          <label style="font-size:12px; color:#6b7280; font-weight:600; display:block; margin-bottom:4px;">
+            Bank
+          </label>
+          <select name="bank">
+            <option value="">-- All Banks --</option>
+            {% for bank in banks %}
+            <option value="{{ bank }}" {% if selected_bank == bank %}selected{% endif %}>
+              {{ bank }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div style="display:flex; gap:8px;">
+          <button type="submit" class="btn-primary-app" style="flex:1;">
+            Apply
+          </button>
+          <a href="{% url 'report_expense' %}"
+             style="flex:1; background:#f3f4f6; color:#374151; border:none; border-radius:6px; padding:9px 12px; font-size:14px; cursor:pointer; text-align:center; text-decoration:none; display:flex; align-items:center; justify-content:center;">
+            Clear
+          </a>
+        </div>
+
+      </div>
+    </form>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="stat-grid" style="margin-bottom:1.25rem;">
+    <div class="stat-box">
+      <div class="stat-label">Total Transactions</div>
+      <div class="stat-value" style="color:#2563eb;">{{ total_count }}</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Total Spent</div>
+      <div class="stat-value expense">₹{{ total_spent }}</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Total Extra Added</div>
+      <div class="stat-value income">₹{{ total_extra }}</div>
+    </div>
+    {% if selected_bank %}
+    <div class="stat-box">
+      <div class="stat-label">Filtered Bank</div>
+      <div class="stat-value" style="font-size:16px; color:#6366f1;">{{ selected_bank }}</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Table -->
+  <div class="card" style="padding:0; overflow:hidden;">
+    <div class="table-responsive">
+      <table class="exp-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Date</th>
+            <th>Bank</th>
+            <th>Description</th>
+            <th style="text-align:right;">Extra Added</th>
+            <th style="text-align:right;">Amount Spent</th>
+            <th style="text-align:right;">Balance</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for exp in expenses %}
+          <tr>
+            <td style="color:#9ca3af; font-size:12px;">{{ forloop.counter }}</td>
+            <td style="white-space:nowrap;">{{ exp.date|date:"d M Y" }}</td>
+            <td>
+              <span style="background:#eff6ff; color:#1d4ed8; font-size:12px; padding:2px 8px; border-radius:4px; font-weight:600;">
+                {{ exp.bank }}
+              </span>
+            </td>
+            <td style="max-width:280px;">{{ exp.description }}</td>
+            <td style="text-align:right; color:#16a34a; font-weight:600;">
+              {% if exp.extra_amount > 0 %}₹{{ exp.extra_amount }}{% else %}—{% endif %}
+            </td>
+            <td style="text-align:right; color:#dc2626; font-weight:600;">
+              {% if exp.amount > 0 %}₹{{ exp.amount }}{% else %}—{% endif %}
+            </td>
+            <td style="text-align:right; font-weight:700;
+              {% if exp.balance_amount < 0 %}color:#dc2626;{% else %}color:#1f2937;{% endif %}">
+              ₹{{ exp.balance_amount }}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" style="text-align:center; padding:2.5rem; color:#9ca3af;">
+              No transactions found for the selected filters.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        {% if expenses %}
+        <tfoot>
+          <tr style="background:#f9fafb; font-weight:700;">
+            <td colspan="4" style="padding:10px 12px; font-size:13px; color:#374151;">
+              Total ({{ total_count }} records)
+            </td>
+            <td style="text-align:right; padding:10px 12px; color:#16a34a;">
+              +₹{{ total_extra }}
+            </td>
+            <td style="text-align:right; padding:10px 12px; color:#dc2626;">
+              ₹{{ total_spent }}
+            </td>
+            <td style="text-align:right; padding:10px 12px;"></td>
+          </tr>
+        </tfoot>
+        {% endif %}
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Print Styles -->
+<style>
+  @media print {
+    .no-print   { display: none !important; }
+    .sidebar    { display: none !important; }
+    .topbar     { display: none !important; }
+    .app-shell  { padding-top: 0 !important; }
+    .shell-sidebar-spacer { display: none !important; }
+    .shell-main { padding: 0 !important; }
+    body        { background: #fff !important; }
+    .card       { box-shadow: none !important; border: 1px solid #e5e7eb !important; }
+  }
+</style>
+{% endblock %}

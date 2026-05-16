@@ -284,3 +284,50 @@ def get_bank_total(request):
 @login_required(login_url='login')
 def bike_expenses_view(request):
     return render(request, 'web/bike_expenses.html')
+
+@login_required(login_url='login')
+def expense_report(request):
+    expenses = ExpensesList.objects.filter(user=request.user)
+
+    # Get all banks for dropdown
+    banks = (
+        ExpensesList.objects
+        .filter(user=request.user)
+        .values_list('bank', flat=True)
+        .distinct()
+        .order_by('bank')
+    )
+
+    # Filters
+    from_date    = request.GET.get('from_date')
+    to_date      = request.GET.get('to_date')
+    selected_bank = request.GET.get('bank')
+
+    if from_date:
+        expenses = expenses.filter(date__gte=from_date)
+    if to_date:
+        expenses = expenses.filter(date__lte=to_date)
+    if selected_bank:
+        expenses = expenses.filter(bank__iexact=selected_bank.strip())
+
+    expenses = expenses.order_by('-date', '-id')
+
+    # Totals
+    from django.db.models import Sum
+    totals = expenses.aggregate(
+        total_spent   = Sum('amount'),
+        total_extra   = Sum('extra_amount'),
+    )
+    total_spent = totals['total_spent'] or 0
+    total_extra = totals['total_extra'] or 0
+
+    return render(request, 'web/report.html', {
+        'expenses':      expenses,
+        'banks':         banks,
+        'from_date':     from_date or '',
+        'to_date':       to_date   or '',
+        'selected_bank': selected_bank or '',
+        'total_spent':   total_spent,
+        'total_extra':   total_extra,
+        'total_count':   expenses.count(),
+    })
