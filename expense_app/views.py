@@ -206,15 +206,17 @@ def expenses_view(request):
         ).order_by('-id').first()
 
         if not last:
-            print("Iffff")
             if entered_total is None:
                 return JsonResponse({
                     'error': 'Total amount required for first entry'
                 }, status=400)
-            old_balance = int(last.balance_amount)
+            old_balance = entered_total
             total_amount = entered_total
-            balance = (old_balance + extra_amount - amount)
-
+            balance = (
+                old_balance
+                + extra_amount
+                - amount
+            )
         else:
             if entered_total is not None and entered_total > 0 and amount == 0:
                 old_balance = int(last.balance_amount)

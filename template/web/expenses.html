@@ -57,7 +57,8 @@
                             <input type="number"
                                 name="extra_amount"
                                 class="form-control"
-                                placeholder="Enter Extra Amount to add">
+                                placeholder="Enter Extra Amount to add"
+                                value="0">
                         </div>
                     </div>
 
@@ -271,7 +272,6 @@ document.getElementById("expenseForm").addEventListener("submit", function(e) {
         const row = `
             <tr>
                 <td>${data.date}</td>
-                <td>₹ ${data.total_amount}</td>
                 <td class="text-primary fw-semibold">
                     ₹ ${data.extra_amount}
                 </td>
