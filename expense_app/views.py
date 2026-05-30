@@ -316,24 +316,28 @@ def bike_expenses_view(request):
             bike_doc.bike_image = request.FILES.get("bike_image")
         bike_doc.save()
 
-        # ── Save trip if trip details are filled ───────
+        # ── Save trip if any trip field is filled ──────
         petrol_amount = request.POST.get("petrol_amount", "").strip()
         start_trip    = request.POST.get("start_trip", "").strip()
         end_trip      = request.POST.get("end_trip", "").strip()
         mileage       = request.POST.get("mileage", "").strip()
         date          = request.POST.get("date", "").strip()
 
-        trip_filled = any([petrol_amount, start_trip, end_trip, mileage])
+        # Fix: check if field was filled (including "0")
+        trip_filled = any([
+            petrol_amount != "0",
+            start_trip    != "0",
+       ])
 
         if trip_filled:
             try:
                 BikeTrip.objects.create(
                     user          = request.user,
                     date          = date or timezone.now().date(),
-                    petrol_amount = int(petrol_amount) if petrol_amount else 0,
-                    start_trip    = int(start_trip)    if start_trip    else 0,
-                    end_trip      = int(end_trip)      if end_trip      else 0,
-                    mileage       = int(mileage)        if mileage       else 0,
+                    petrol_amount = int(petrol_amount) if petrol_amount != "" else 0,
+                    start_trip    = int(start_trip)    if start_trip    != "" else 0,
+                    end_trip      = int(end_trip)      if end_trip      != "" else 0,
+                    mileage       = int(mileage)       if mileage       != "" else 0,
                 )
                 messages.success(request, "Trip details saved successfully!")
             except ValueError:
