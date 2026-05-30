@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic import TemplateView
 from . import views
 urlpatterns=[
     path('',views.home_page,name='home_page'),
@@ -15,5 +16,9 @@ urlpatterns=[
     path('payment_method', views.payment_method, name='payment_method'),
     path('get-bank-total/', views.get_bank_total, name='get_bank_total'),
     path('self-transfer/', views.self_transfer, name='self_transfer'),
+    path('manifest.json', TemplateView.as_view(
+        template_name='manifest.json',
+        content_type='application/json'
+    ), name='manifest'),
 
 ]
