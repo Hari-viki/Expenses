@@ -1,0 +1,75 @@
+{% extends 'layout/layout.html' %} 
+
+{% load static %} 
+
+{% block title %}Payment{% endblock %} 
+
+{% block content %}
+
+<style>
+    .maintenance-wrapper {
+        min-height: 80vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .maintenance-card {
+        background: #fff;
+        border: none;
+        border-radius: 25px;
+        padding: 50px 40px;
+        text-align: center;
+        box-shadow: 0 10px 35px rgba(0, 0, 0, 0.08);
+        max-width: 550px;
+        width: 100%;
+    }
+
+    .maintenance-icon {
+        font-size: 80px;
+        color: #ffc107;
+        margin-bottom: 20px;
+    }
+
+    .maintenance-title {
+        font-weight: 700;
+        margin-bottom: 12px;
+    }
+
+    .maintenance-text {
+        color: #6c757d;
+        margin-bottom: 25px;
+    }
+
+    .back-btn {
+        border-radius: 12px;
+        padding: 10px 25px;
+        font-weight: 600;
+    }
+</style>
+
+<div class="container">
+    <div class="maintenance-wrapper">
+        <div class="maintenance-card">
+            <!-- ICON -->
+
+            <div class="maintenance-icon">🔧</div>
+
+            <!-- TITLE -->
+
+            <h2 class="maintenance-title">Payment Page</h2>
+
+            <!-- MESSAGE -->
+
+            <p class="maintenance-text">
+                This feature is currently under maintenance. Payment integration will be available soon.
+            </p>
+
+            <!-- BUTTON -->
+
+            <a href="{% url 'home' %}" class="btn btn-primary back-btn"> Back to Dashboard </a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

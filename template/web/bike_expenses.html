@@ -1,11 +1,296 @@
 {% extends 'layout/layout.html' %}
 {% load static %}
-
 {% block title %}Bike Expenses{% endblock %}
 
 {% block content %}
+<div style="max-width:900px; margin:0 auto;">
 
-<h1>Hello</h1>
+  <!-- Page Header -->
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; flex-wrap:wrap; gap:12px;">
+    <div>
+      <h2 style="font-size:20px; font-weight:700; color:#1f2937; margin-bottom:2px;">
+        🏍 Bike Expenses
+      </h2>
+      <p style="font-size:13px; color:#6b7280; margin:0;">
+        Track petrol, trips and bike documents
+      </p>
+    </div>
+  </div>
 
+  
 
-{% endblock content %}
+  <!-- Messages -->
+  {% if messages %}
+    {% for message in messages %}
+    <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#16a34a;
+                border-radius:8px; padding:10px 14px; font-size:13px; margin-bottom:1rem;">
+      ✓ {{ message }}
+    </div>
+    {% endfor %}
+  {% endif %}
+
+  <form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <!-- Section 1: Trip Info -->
+    <div class="card" style="margin-bottom:1.25rem;">
+
+      <div style="display:flex; align-items:center; gap:8px;
+                  margin-bottom:1.25rem; padding-bottom:1rem;
+                  border-bottom:1px solid #f3f4f6;">
+        <div style="width:32px; height:32px; background:#eff6ff;
+                    border-radius:8px; display:flex; align-items:center;
+                    justify-content:center; font-size:16px;">⛽</div>
+        <span style="font-size:15px; font-weight:700; color:#1f2937;">
+          Trip Details
+        </span>
+        <a href="{% url 'bike_report' %}"
+        style="padding:9px 16px; background:#f3f4f6; color:#374151;
+                border-radius:8px; font-size:13px; font-weight:600;
+                text-decoration:none;">
+        View Report →
+        </a>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr)); gap:1rem;">
+
+        <div>
+          <label style="font-size:12px; font-weight:600; color:#374151;
+                        display:block; margin-bottom:5px;">Date</label>
+          <input type="date" name="date"
+                 value="{{ bike_doc.date|date:'Y-m-d' }}"
+                 style="width:100%; padding:9px 12px; border:1.5px solid #e5e7eb;
+                        border-radius:8px; font-size:14px; outline:none;
+                        font-family:'DM Sans',sans-serif; color:#1f2937;">
+        </div>
+
+        <div>
+          <label style="font-size:12px; font-weight:600; color:#374151;
+                        display:block; margin-bottom:5px;">Petrol Amount (₹)</label>
+          <input type="number" name="petrol_amount"
+                 value="{{ bike_doc.petrol_amount }}"
+                 placeholder="0"
+                 style="width:100%; padding:9px 12px; border:1.5px solid #e5e7eb;
+                        border-radius:8px; font-size:14px; outline:none;
+                        font-family:'DM Sans',sans-serif; color:#1f2937;">
+        </div>
+
+        <div>
+          <label style="font-size:12px; font-weight:600; color:#374151;
+                        display:block; margin-bottom:5px;">Start Trip (km)</label>
+          <input type="number" name="start_trip"
+                 value="{{ bike_doc.start_trip }}"
+                 placeholder="0"
+                 style="width:100%; padding:9px 12px; border:1.5px solid #e5e7eb;
+                        border-radius:8px; font-size:14px; outline:none;
+                        font-family:'DM Sans',sans-serif; color:#1f2937;">
+        </div>
+
+        <div>
+          <label style="font-size:12px; font-weight:600; color:#374151;
+                        display:block; margin-bottom:5px;">End Trip (km)</label>
+          <input type="number" name="end_trip"
+                 value="{{ bike_doc.end_trip }}"
+                 placeholder="0"
+                 style="width:100%; padding:9px 12px; border:1.5px solid #e5e7eb;
+                        border-radius:8px; font-size:14px; outline:none;
+                        font-family:'DM Sans',sans-serif; color:#1f2937;">
+        </div>
+
+        <div>
+          <label style="font-size:12px; font-weight:600; color:#374151;
+                        display:block; margin-bottom:5px;">Mileage (km/l)</label>
+          <input type="number" name="mileage"
+                 value="{{ bike_doc.mileage }}"
+                 placeholder="0"
+                 style="width:100%; padding:9px 12px; border:1.5px solid #e5e7eb;
+                        border-radius:8px; font-size:14px; outline:none;
+                        font-family:'DM Sans',sans-serif; color:#1f2937;">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Section 2: Bike Image -->
+    <div class="card" style="margin-bottom:1.25rem;">
+
+      <div style="display:flex; align-items:center; gap:8px;
+                  margin-bottom:1.25rem; padding-bottom:1rem;
+                  border-bottom:1px solid #f3f4f6;">
+        <div style="width:32px; height:32px; background:#fdf4ff;
+                    border-radius:8px; display:flex; align-items:center;
+                    justify-content:center; font-size:16px;">📷</div>
+        <span style="font-size:15px; font-weight:700; color:#1f2937;">
+          Bike Photo
+        </span>
+      </div>
+
+      <div style="display:flex; align-items:center; gap:1.5rem; flex-wrap:wrap;">
+
+        <!-- Preview -->
+        <div id="bikePreviewWrap"
+             style="width:100px; height:100px; border-radius:12px;
+                    overflow:hidden; border:2px dashed #e5e7eb;
+                    background:#f9fafb; display:flex; align-items:center;
+                    justify-content:center; flex-shrink:0;">
+          {% if bike_doc.bike_image %}
+            <img src="{{ bike_doc.bike_image.url }}" id="bikePreview"
+                 style="width:100%; height:100%; object-fit:cover;">
+          {% else %}
+            <span id="bikePreviewPlaceholder"
+                  style="font-size:28px;">🏍</span>
+            <img id="bikePreview" style="display:none;
+                 width:100%; height:100%; object-fit:cover;">
+          {% endif %}
+        </div>
+
+        <div style="flex:1; min-width:200px;">
+          <label style="font-size:12px; font-weight:600; color:#374151;
+                        display:block; margin-bottom:5px;">Upload Bike Image</label>
+          <input type="file" name="bike_image" id="bikeImageInput"
+                 accept="image/*"
+                 style="width:100%; padding:9px 12px; border:1.5px solid #e5e7eb;
+                        border-radius:8px; font-size:13px; outline:none;
+                        font-family:'DM Sans',sans-serif; background:#fff;">
+          {% if bike_doc.bike_image %}
+          <a href="{{ bike_doc.bike_image.url }}" target="_blank"
+             style="display:inline-block; margin-top:8px; font-size:12px;
+                    color:#6366f1; text-decoration:none;">
+            ↗ View current image
+          </a>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Section 3: Documents -->
+    <div class="card" style="margin-bottom:1.5rem;">
+
+      <div style="display:flex; align-items:center; gap:8px;
+                  margin-bottom:1.25rem; padding-bottom:1rem;
+                  border-bottom:1px solid #f3f4f6;">
+        <div style="width:32px; height:32px; background:#fff7ed;
+                    border-radius:8px; display:flex; align-items:center;
+                    justify-content:center; font-size:16px;">📄</div>
+        <span style="font-size:15px; font-weight:700; color:#1f2937;">
+          Bike Documents
+        </span>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px,1fr)); gap:1rem;">
+
+        <!-- Licence -->
+        <div style="border:1.5px solid #e5e7eb; border-radius:10px; padding:1rem;">
+          <div style="display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+            <span style="font-size:16px;">🪪</span>
+            <span style="font-size:13px; font-weight:700; color:#1f2937;">Licence</span>
+            {% if bike_doc.licence_image %}
+            <span style="margin-left:auto; background:#f0fdf4; color:#16a34a;
+                         font-size:11px; padding:2px 7px; border-radius:4px;
+                         font-weight:600;">Uploaded</span>
+            {% else %}
+            <span style="margin-left:auto; background:#fef2f2; color:#dc2626;
+                         font-size:11px; padding:2px 7px; border-radius:4px;
+                         font-weight:600;">Missing</span>
+            {% endif %}
+          </div>
+          <input type="file" name="licence_image" accept="image/*,.pdf"
+                 style="width:100%; padding:8px 10px; border:1.5px solid #e5e7eb;
+                        border-radius:8px; font-size:12px; outline:none;
+                        font-family:'DM Sans',sans-serif; background:#fff;">
+          {% if bike_doc.licence_image %}
+          <a href="{{ bike_doc.licence_image.url }}" target="_blank"
+             style="display:block; margin-top:8px; font-size:12px;
+                    color:#6366f1; text-decoration:none; text-align:center;
+                    padding:6px; border:1px solid #e5e7eb; border-radius:6px;">
+            ↗ Open Licence
+          </a>
+          {% endif %}
+        </div>
+
+        <!-- RC -->
+        <div style="border:1.5px solid #e5e7eb; border-radius:10px; padding:1rem;">
+          <div style="display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+            <span style="font-size:16px;">📋</span>
+            <span style="font-size:13px; font-weight:700; color:#1f2937;">RC Book</span>
+            {% if bike_doc.rc_image %}
+            <span style="margin-left:auto; background:#f0fdf4; color:#16a34a;
+                         font-size:11px; padding:2px 7px; border-radius:4px;
+                         font-weight:600;">Uploaded</span>
+            {% else %}
+            <span style="margin-left:auto; background:#fef2f2; color:#dc2626;
+                         font-size:11px; padding:2px 7px; border-radius:4px;
+                         font-weight:600;">Missing</span>
+            {% endif %}
+          </div>
+          <input type="file" name="rc_image" accept="image/*,.pdf"
+                 style="width:100%; padding:8px 10px; border:1.5px solid #e5e7eb;
+                        border-radius:8px; font-size:12px; outline:none;
+                        font-family:'DM Sans',sans-serif; background:#fff;">
+          {% if bike_doc.rc_image %}
+          <a href="{{ bike_doc.rc_image.url }}" target="_blank"
+             style="display:block; margin-top:8px; font-size:12px;
+                    color:#6366f1; text-decoration:none; text-align:center;
+                    padding:6px; border:1px solid #e5e7eb; border-radius:6px;">
+            ↗ Open RC
+          </a>
+          {% endif %}
+        </div>
+
+        <!-- Insurance -->
+        <div style="border:1.5px solid #e5e7eb; border-radius:10px; padding:1rem;">
+          <div style="display:flex; align-items:center; gap:6px; margin-bottom:10px;">
+            <span style="font-size:16px;">🛡</span>
+            <span style="font-size:13px; font-weight:700; color:#1f2937;">Insurance</span>
+            {% if bike_doc.insurance_image %}
+            <span style="margin-left:auto; background:#f0fdf4; color:#16a34a;
+                         font-size:11px; padding:2px 7px; border-radius:4px;
+                         font-weight:600;">Uploaded</span>
+            {% else %}
+            <span style="margin-left:auto; background:#fef2f2; color:#dc2626;
+                         font-size:11px; padding:2px 7px; border-radius:4px;
+                         font-weight:600;">Missing</span>
+            {% endif %}
+          </div>
+          <input type="file" name="insurance_image" accept="image/*,.pdf"
+                 style="width:100%; padding:8px 10px; border:1.5px solid #e5e7eb;
+                        border-radius:8px; font-size:12px; outline:none;
+                        font-family:'DM Sans',sans-serif; background:#fff;">
+          {% if bike_doc.insurance_image %}
+          <a href="{{ bike_doc.insurance_image.url }}" target="_blank"
+             style="display:block; margin-top:8px; font-size:12px;
+                    color:#6366f1; text-decoration:none; text-align:center;
+                    padding:6px; border:1px solid #e5e7eb; border-radius:6px;">
+            ↗ Open Insurance
+          </a>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Save Button -->
+    <div style="display:flex; justify-content:flex-end;">
+      <button type="submit" class="btn-primary-app"
+              style="padding:10px 32px; font-size:15px; font-weight:600;">
+        Save Details
+      </button>
+    </div>
+
+  </form>
+</div>
+
+<script>
+  document.getElementById('bikeImageInput').addEventListener('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+    const preview = document.getElementById('bikePreview');
+    const placeholder = document.getElementById('bikePreviewPlaceholder');
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = 'block';
+    if (placeholder) placeholder.style.display = 'none';
+  });
+</script>
+
+{% endblock %}

@@ -30,8 +30,8 @@
 
   <nav class="sidebar-nav">
     {% if request.user.is_authenticated %}
-      <a href="{% url 'home' %}"
-         class="sidebar-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+      <a href="{% url 'home_page' %}"
+         class="sidebar-link {% if request.resolver_match.url_name == 'home_page' %}active{% endif %}">
         Home
       </a>
       <a href="{% url 'expenses' %}"

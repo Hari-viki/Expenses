@@ -38,7 +38,7 @@ def signup_view(request):
             user.save()
         login(request, user) 
         messages.success(request, "Account created successfully")
-        return redirect('home')
+        return redirect('home_page')
     return render(request, 'web/signup.html')
 
 def login_view(request):
@@ -48,7 +48,7 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            return redirect('home')
+            return redirect('home_page')
         else:
             messages.error(request, "Invalid credentials")
     return render(request, 'web/login.html')
@@ -58,7 +58,24 @@ def logout_view(request):
     return redirect('login')
 
 @login_required(login_url='login')
-def home_view(request):
+def home_page(request):
+    expenses = ExpensesList.objects.filter(user=request.user)
+    # Total Expense
+    total_expense = expenses.aggregate(total=Sum("amount"))["total"] or 0
+    # Total Income
+    total_income = expenses.aggregate(total=Sum("extra_amount"))["total"] or 0
+    # Current Balance
+    last_entry = expenses.order_by("-id").first()
+    current_balance = last_entry.balance_amount if last_entry else 0
+    context = {
+        "total_expense": total_expense,
+        "total_income": total_income,
+        "current_balance": current_balance,
+    }
+    return render(request, "web/home_page.html", context)
+
+@login_required(login_url='login')
+def home_view_dashboard(request):
 
     today = timezone.now()
     month = today.month
@@ -117,7 +134,7 @@ def home_view(request):
         )['total'] or 0
     )
     current_balance = total_income - total_expense
-    return render(request, 'web/home.html', {
+    return render(request, 'web/home_dashboard.html', {
         'labels': labels,
         'expense_data': expense_data,
         'income_data': income_data,
@@ -283,9 +300,133 @@ def get_bank_total(request):
         'balance': current_balance
     })
 
-@login_required(login_url='login')
+@login_required(login_url="login")
 def bike_expenses_view(request):
-    return render(request, 'web/bike_expenses.html')
+    bike_doc, created = BikeExpensesList.objects.get_or_create(user=request.user)
+
+    if request.method == "POST":
+        # ── Save documents if uploaded ─────────────────
+        if request.FILES.get("licence_image"):
+            bike_doc.licence_image = request.FILES.get("licence_image")
+        if request.FILES.get("rc_image"):
+            bike_doc.rc_image = request.FILES.get("rc_image")
+        if request.FILES.get("insurance_image"):
+            bike_doc.insurance_image = request.FILES.get("insurance_image")
+        if request.FILES.get("bike_image"):
+            bike_doc.bike_image = request.FILES.get("bike_image")
+        bike_doc.save()
+
+        # ── Save trip if trip details are filled ───────
+        petrol_amount = request.POST.get("petrol_amount", "").strip()
+        start_trip    = request.POST.get("start_trip", "").strip()
+        end_trip      = request.POST.get("end_trip", "").strip()
+        mileage       = request.POST.get("mileage", "").strip()
+        date          = request.POST.get("date", "").strip()
+
+        trip_filled = any([petrol_amount, start_trip, end_trip, mileage])
+
+        if trip_filled:
+            try:
+                BikeTrip.objects.create(
+                    user          = request.user,
+                    date          = date or timezone.now().date(),
+                    petrol_amount = int(petrol_amount) if petrol_amount else 0,
+                    start_trip    = int(start_trip)    if start_trip    else 0,
+                    end_trip      = int(end_trip)      if end_trip      else 0,
+                    mileage       = int(mileage)        if mileage       else 0,
+                )
+                messages.success(request, "Trip details saved successfully!")
+            except ValueError:
+                messages.error(request, "Invalid trip values. Please check and try again.")
+        else:
+            messages.success(request, "Documents saved successfully!")
+
+        return redirect("bike_expenses")
+
+    context = {"bike_doc": bike_doc}
+    return render(request, "web/bike_expenses.html", context)
+
+
+@login_required(login_url="login")
+def bike_report_view(request):
+    trips = BikeTrip.objects.filter(user=request.user)
+
+    # ── Filters ────────────────────────────────────────
+    from_date = request.GET.get("from_date", "").strip()
+    to_date   = request.GET.get("to_date",   "").strip()
+
+    if from_date:
+        trips = trips.filter(date__gte=from_date)
+    if to_date:
+        trips = trips.filter(date__lte=to_date)
+
+    trips = trips.order_by("-date", "-created_at")
+
+    # ── Totals ─────────────────────────────────────────
+    from django.db.models import Sum
+    totals = trips.aggregate(
+        total_petrol = Sum("petrol_amount"),
+        total_start  = Sum("start_trip"),
+        total_end    = Sum("end_trip"),
+        total_mileage= Sum("mileage"),
+    )
+    total_petrol   = totals["total_petrol"]  or 0
+    total_km       = sum(
+        max(0, t.end_trip - t.start_trip) for t in trips
+    )
+
+    return render(request, "web/bike_report.html", {
+        "trips":        trips,
+        "from_date":    from_date,
+        "to_date":      to_date,
+        "total_petrol": total_petrol,
+        "total_km":     total_km,
+        "total_count":  trips.count(),
+    })
+
+@login_required(login_url="login")
+def bike_report_download(request):
+    import csv
+    from django.http import HttpResponse
+
+    trips     = BikeTrip.objects.filter(user=request.user)
+    from_date = request.GET.get("from_date", "").strip()
+    to_date   = request.GET.get("to_date",   "").strip()
+
+    if from_date:
+        trips = trips.filter(date__gte=from_date)
+    if to_date:
+        trips = trips.filter(date__lte=to_date)
+
+    trips = trips.order_by("-date")
+
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="bike_report.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(["#", "Date", "Petrol (₹)", "Start (km)",
+                     "End (km)", "Distance (km)", "Mileage (km/l)"])
+
+    for i, trip in enumerate(trips, start=1):
+        writer.writerow([
+            i,
+            trip.date.strftime("%d %b %Y"),
+            trip.petrol_amount,
+            trip.start_trip,
+            trip.end_trip,
+            trip.km_travelled,
+            trip.mileage,
+        ])
+
+    # Totals
+    total_km = sum(max(0, t.end_trip - t.start_trip) for t in trips)
+    from django.db.models import Sum
+    total_petrol = trips.aggregate(t=Sum("petrol_amount"))["t"] or 0
+
+    writer.writerow([])
+    writer.writerow(["TOTAL", "", total_petrol, "", "", total_km, ""])
+
+    return response
 
 @login_required(login_url='login')
 def expense_report(request):
@@ -402,3 +543,7 @@ def self_transfer(request):
         )
         return redirect('expenses')
     return redirect('expenses')
+
+@login_required(login_url='login')
+def payment_method(request):
+    return render(request, 'web/payment_view.html')

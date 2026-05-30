@@ -1,0 +1,164 @@
+{% extends 'layout/layout.html' %}
+{% load static %}
+{% block title %}Bike Trip Report{% endblock %}
+
+{% block content %}
+<div style="max-width:1000px; margin:0 auto;">
+
+  <!-- Header -->
+  <div style="display:flex; align-items:center; justify-content:space-between;
+              margin-bottom:1.5rem; flex-wrap:wrap; gap:12px;">
+    <div>
+      <h2 style="font-size:20px; font-weight:700; color:#1f2937; margin-bottom:2px;">
+        🏍 Bike Trip Report
+      </h2>
+      <p style="font-size:13px; color:#6b7280; margin:0;">
+        All your recorded trips
+      </p>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <a href="{% url 'bike_expenses' %}"
+         style="padding:9px 16px; background:#f3f4f6; color:#374151;
+                border-radius:8px; font-size:13px; font-weight:600;
+                text-decoration:none;">
+        ← Back
+      </a>
+      <a href="{% url 'bike_report_download' %}?from_date={{ from_date }}&to_date={{ to_date }}"
+         class="btn-primary-app"
+         style="text-decoration:none; padding:9px 16px; font-size:13px;">
+        ⬇ Download CSV
+      </a>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="card no-print" style="margin-bottom:1.25rem;">
+    <form method="GET" action="{% url 'bike_report' %}">
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px,1fr));
+                  gap:12px; align-items:flex-end;">
+        <div>
+          <label style="font-size:12px; font-weight:600; color:#374151;
+                        display:block; margin-bottom:4px;">From Date</label>
+          <input type="date" name="from_date" value="{{ from_date }}">
+        </div>
+        <div>
+          <label style="font-size:12px; font-weight:600; color:#374151;
+                        display:block; margin-bottom:4px;">To Date</label>
+          <input type="date" name="to_date" value="{{ to_date }}">
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button type="submit" class="btn-primary-app" style="flex:1;">
+            Apply
+          </button>
+          <a href="{% url 'bike_report' %}"
+             style="flex:1; background:#f3f4f6; color:#374151; border:none;
+                    border-radius:6px; padding:9px 12px; font-size:14px;
+                    cursor:pointer; text-align:center; text-decoration:none;
+                    display:flex; align-items:center; justify-content:center;">
+            Clear
+          </a>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="stat-grid" style="margin-bottom:1.25rem;">
+    <div class="stat-box">
+      <div class="stat-label">Total Trips</div>
+      <div class="stat-value" style="color:#2563eb;">{{ total_count }}</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Total Petrol Spent</div>
+      <div class="stat-value expense">₹{{ total_petrol }}</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Total KM Travelled</div>
+      <div class="stat-value income">{{ total_km }} km</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">Avg per Trip</div>
+      <div class="stat-value" style="color:#6366f1;">
+        {% if total_count %}
+          ₹{% widthratio total_petrol total_count 1 %}
+        {% else %}
+          ₹0
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card" style="padding:0; overflow:hidden;">
+    <div class="table-responsive">
+      <table class="exp-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Date</th>
+            <th style="text-align:right;">Petrol (₹)</th>
+            <th style="text-align:right;">Start (km)</th>
+            <th style="text-align:right;">End (km)</th>
+            <th style="text-align:right;">Distance</th>
+            <th style="text-align:right;">Mileage</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for trip in trips %}
+          <tr>
+            <td style="color:#9ca3af; font-size:12px;">{{ forloop.counter }}</td>
+            <td style="white-space:nowrap;">{{ trip.date|date:"d M Y" }}</td>
+            <td style="text-align:right; color:#dc2626; font-weight:600;">
+              ₹{{ trip.petrol_amount }}
+            </td>
+            <td style="text-align:right; color:#374151;">
+              {{ trip.start_trip }}
+            </td>
+            <td style="text-align:right; color:#374151;">
+              {{ trip.end_trip }}
+            </td>
+            <td style="text-align:right; font-weight:700;
+                       color:{% if trip.km_travelled > 0 %}#16a34a{% else %}#9ca3af{% endif %};">
+              {{ trip.km_travelled }} km
+            </td>
+            <td style="text-align:right; color:#6366f1; font-weight:600;">
+              {% if trip.mileage > 0 %}{{ trip.mileage }} km/l{% else %}—{% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7"
+                style="text-align:center; padding:2.5rem; color:#9ca3af;">
+              No trips recorded yet.
+              <a href="{% url 'bike_expenses' %}"
+                 style="color:#6366f1; text-decoration:none; font-weight:600;">
+                Add your first trip →
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        {% if trips %}
+        <tfoot>
+          <tr style="background:#f9fafb; font-weight:700;">
+            <td colspan="2"
+                style="padding:10px 12px; font-size:13px; color:#374151;">
+              Total ({{ total_count }} trips)
+            </td>
+            <td style="text-align:right; padding:10px 12px; color:#dc2626;">
+              ₹{{ total_petrol }}
+            </td>
+            <td colspan="2"></td>
+            <td style="text-align:right; padding:10px 12px; color:#16a34a;">
+              {{ total_km }} km
+            </td>
+            <td></td>
+          </tr>
+        </tfoot>
+        {% endif %}
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

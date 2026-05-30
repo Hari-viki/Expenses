@@ -79,21 +79,20 @@
         border-radius: 12px;
     }
 
-    .preview-box {
-        width: 100px;
-        height: 100px;
-        border-radius: 50%;
-        border: 2px dashed #dcdfe4;
-        overflow: hidden;
-        margin: auto;
-        margin-bottom: 15px;
-        background: #f8f9fa;
+    .preview-box{
+        width:100px;
+        height:100px;
+        border-radius:50%;
+        overflow:hidden;
+        margin:auto;
+        margin-bottom:15px;
+        border:2px dashed #dcdfe4;
     }
 
-    .preview-box img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
+    .preview-box img{
+        width:100%;
+        height:100%;
+        object-fit:cover;
     }
 
     @media (max-width: 768px) {
@@ -146,8 +145,12 @@
                         <!-- IMAGE PREVIEW -->
 
                         <div class="text-center">
-                            <div class="preview-box">
-                                <img id="previewImage" src="{% static 'images/default-user.png' %}" alt="Preview" />
+                            <div class="preview-box d-none"
+                                id="previewBox">
+
+                                <img id="previewImage"
+                                    alt="Preview">
+
                             </div>
                         </div>
 
@@ -244,13 +247,35 @@
         }
     });
 
-    document.getElementById("profilePicInput").addEventListener("change", function () {
+    document
+    .getElementById('profilePicInput')
+    .addEventListener('change', function () {
+
         const file = this.files[0];
 
+        const previewBox =
+            document.getElementById('previewBox');
+
+        const previewImage =
+            document.getElementById('previewImage');
+
         if (file) {
-            document.getElementById("previewImage").src = URL.createObjectURL(file);
+
+            previewImage.src =
+                URL.createObjectURL(file);
+
+            previewBox.classList.remove('d-none');
+
+        } else {
+
+            previewBox.classList.add('d-none');
+
+            previewImage.src = '';
+
         }
+
     });
+
 </script>
 
 {% endblock %}
