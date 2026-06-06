@@ -148,103 +148,63 @@ def home_view_dashboard(request):
         'month_name': today.strftime("%B"),
     })
 
-@login_required(login_url='login')
+@login_required(login_url="login")
 def expenses_view(request):
     months = [(i, calendar.month_abbr[i]) for i in range(1, 13)]
-    month = request.GET.get('month')
-    search = request.GET.get('search')
-    selected_bank = request.GET.get('bank')
-    expenses = ExpensesList.objects.filter(
-        user=request.user
-    )
+    month = request.GET.get("month")
+    search = request.GET.get("search")
+    selected_bank = request.GET.get("bank")
+    expenses = ExpensesList.objects.filter(user=request.user)
     if month:
-        expenses = expenses.filter(
-            date__month=month
-        )
+        expenses = expenses.filter(date__month=month)
     if search:
-        expenses = expenses.filter(
-            description__icontains=search
-        )
+        expenses = expenses.filter(description__icontains=search)
     if selected_bank:
-        expenses = expenses.filter(
-            bank__iexact=selected_bank.strip()
-        )
-    expenses = expenses.order_by('-id')
-    total = expenses.aggregate(
-        total=Sum('amount')
-    )['total'] or 0
+        expenses = expenses.filter(bank__iexact=selected_bank.strip())
+    expenses = expenses.order_by("-id")
+    total = expenses.aggregate(total=Sum("amount"))["total"] or 0
     bank_selection = Bank.objects.all()
     banks = (
-        ExpensesList.objects
-        .filter(user=request.user)
-        .values_list('bank', flat=True)
+        ExpensesList.objects.filter(user=request.user)
+        .values_list("bank", flat=True)
         .distinct()
     )
     today = datetime.now().day
     is_first_week = today <= 7
     paginator = Paginator(expenses, 10)
-    page_number = request.GET.get('page')
-    expenses = paginator.get_page(page_number)
-    if request.method == 'POST':
+    page_number = request.GET.get("page")
+    expenses_page = paginator.get_page(page_number)
+    if request.method == "POST":
         try:
-            amount = int(request.POST.get('amount', 0))
-            extra_amount = int(request.POST.get('extra_amount', 0))
-            if amount < 0:
-                return JsonResponse({
-                    'error': 'Expense amount cannot be negative'
-                }, status=400)
-            if extra_amount < 0:
-                return JsonResponse({
-                    'error': 'Extra amount cannot be negative'
-                }, status=400)
+            amount = int(request.POST.get("amount") or 0)
+            extra_amount = int(request.POST.get("extra_amount") or 0)
+            if amount < 0 or extra_amount < 0:
+                return JsonResponse(
+                    {"error": "Amount cannot be negative"}, status=400
+                )
         except ValueError:
-            return JsonResponse({
-                'error': 'Invalid amount'
-            }, status=400)
-        description = request.POST.get('description', '').strip()
-        bank_name = request.POST.get(
-            'bank',
-            ''
-        ).strip().upper()
-        entered_total = request.POST.get('total_amount')
+            return JsonResponse({"error": "Invalid amount"}, status=400)
+        description = request.POST.get("description", "").strip()
+        bank_name = request.POST.get("bank", "").strip().upper()
+        entered_total = request.POST.get("total_amount")
         entered_total = (
-            int(entered_total)
-            if entered_total and entered_total.strip()
-            else None
+            int(entered_total) if entered_total and entered_total.strip() else None
         )
-        current_month = timezone.now().month
-        current_year = timezone.now().year
-
-        last = ExpensesList.objects.filter(
-            user=request.user,
-            bank__iexact=bank_name,
-            date__month=current_month,
-            date__year=current_year
-        ).order_by('-id').first()
-
+        last = (
+            ExpensesList.objects.filter(user=request.user, bank__iexact=bank_name)
+            .order_by("-id")
+            .first()
+        )
         if not last:
             if entered_total is None:
-                return JsonResponse({
-                    'error': 'Total amount required for first entry'
-                }, status=400)
-            old_balance = entered_total
+                return JsonResponse(
+                    {"error": "Total amount required for first entry"}, status=400
+                )
             total_amount = entered_total
-            balance = (
-                old_balance
-                + extra_amount
-                - amount
-            )
+            balance = entered_total + extra_amount - amount
         else:
-            if entered_total is not None and entered_total > 0 and amount == 0:
-                old_balance = int(last.balance_amount)
-                total_amount = entered_total
-                balance = (old_balance + extra_amount - amount)
-            else:
-                old_total = int(last.total_amount)
-                old_balance = int(last.balance_amount)
-                total_amount = old_total
-                balance = (old_balance + extra_amount - amount)
-
+            total_amount = int(last.total_amount)
+            balance = int(last.balance_amount) + extra_amount - amount
         exp = ExpensesList.objects.create(
             user=request.user,
             bank=bank_name,
@@ -253,35 +213,37 @@ def expenses_view(request):
             total_amount=total_amount,
             balance_amount=balance,
             description=description,
-            date=timezone.now()
+            date=timezone.now(),
         )
-
-        new_total = ExpensesList.objects.filter(
-            user=request.user
-        ).aggregate(
-            total=Sum('amount')
-        )['total'] or 0
-
-        return JsonResponse({
-            'date': exp.date.strftime("%b %d, %Y"),
-            'total_amount': exp.total_amount,
-            'amount': exp.amount,
-            'extra_amount': exp.extra_amount,
-            'balance': exp.balance_amount,
-            'description': exp.description,
-            'bank': exp.bank,
-            'total_spent': new_total
-        })
-
-    return render(request, 'web/expenses.html', {
-        'expenses': expenses,
-        'months': months,
-        'total_spent': total,
-        'is_first_week': is_first_week,
-        'banks': banks,
-        'bank_selection': bank_selection,
-        'selected_bank': selected_bank
-    })
+        new_total = (
+            ExpensesList.objects.filter(user=request.user).aggregate(
+                total=Sum("amount")
+            )["total"]
+            or 0
+        )
+        return JsonResponse(
+            {
+                "date": exp.date.strftime("%b %d, %Y"),
+                "total_amount": exp.total_amount,
+                "amount": exp.amount,
+                "extra_amount": float(exp.extra_amount),
+                "balance": exp.balance_amount,
+                "description": exp.description,
+                "bank": exp.bank,
+                "total_spent": new_total,
+            }
+        )
+    return render(request, "web/expenses.html",
+        {
+            "expenses": expenses_page,
+            "months": months,
+            "total_spent": total,
+            "is_first_week": is_first_week,
+            "banks": banks,
+            "bank_selection": bank_selection,
+            "selected_bank": selected_bank,
+        },
+    )
 
 @login_required
 def get_bank_total(request):
