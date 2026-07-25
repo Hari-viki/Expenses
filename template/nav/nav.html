@@ -14,17 +14,29 @@
   </div>
 
   {% if request.user.is_authenticated %}
-  <div class="sidebar-profile">
-    {% if request.user.profile_picture %}
-      <img src="{{ request.user.profile_picture.url }}"
-           alt="{{ request.user.username }}"
-           class="sidebar-avatar">
-    {% else %}
-      <div class="sidebar-avatar-initials">
-        {{ request.user.username|first|upper }}
-      </div>
-    {% endif %}
-    <span class="sidebar-profile-name">{{ request.user.username }}</span>
+  <div class="sidebar-profile dropdown">
+    <a href="#"
+       class="d-flex align-items-center gap-2 text-decoration-none"
+       role="button"
+       id="sidebarAvatarDropdown"
+       data-bs-toggle="dropdown"
+       aria-expanded="false">
+      {% if request.user.profile_picture %}
+        <img src="{{ request.user.profile_picture.url }}"
+             alt="{{ request.user.username }}"
+             class="sidebar-avatar">
+      {% else %}
+        <div class="sidebar-avatar-initials">
+          {{ request.user.username|first|upper }}
+        </div>
+      {% endif %}
+      <span class="sidebar-profile-name">{{ request.user.username }}</span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="sidebarAvatarDropdown">
+      <li><a class="dropdown-item" href="{% url 'update_profile' %}">Update Profile</a></li>
+      <li><hr class="dropdown-divider"></li>
+      <li><a class="dropdown-item" href="{% url 'logout' %}">Logout</a></li>
+    </ul>
   </div>
   {% endif %}
 
@@ -32,25 +44,27 @@
     {% if request.user.is_authenticated %}
       <a href="{% url 'home_page' %}"
          class="sidebar-link {% if request.resolver_match.url_name == 'home_page' %}active{% endif %}">
-        Home
+        <i class="bi bi-house-door-fill"></i> Home
       </a>
       <a href="{% url 'expenses' %}"
          class="sidebar-link {% if request.resolver_match.url_name == 'expenses' %}active{% endif %}">
-        Expense
+        <i class="bi bi-wallet2"></i> Expense
       </a>
       <a href="{% url 'report_expense' %}"
          class="sidebar-link {% if request.resolver_match.url_name == 'report_expense' %}active{% endif %}">
-        Report
+        <i class="bi bi-bar-chart-fill"></i> Report
       </a>
-      <a href="{% url 'logout' %}" class="sidebar-link sidebar-logout">Logout</a>
+      <a href="{% url 'logout' %}" class="sidebar-link sidebar-logout">
+        <i class="bi bi-box-arrow-right"></i> Logout
+      </a>
     {% else %}
       <a href="{% url 'login' %}"
          class="sidebar-link {% if request.resolver_match.url_name == 'login' %}active{% endif %}">
-        Login
+        <i class="bi bi-box-arrow-in-right"></i> Login
       </a>
       <a href="{% url 'signup' %}"
          class="sidebar-link {% if request.resolver_match.url_name == 'signup' %}active{% endif %}">
-        Signup
+        <i class="bi bi-person-plus-fill"></i> Signup
       </a>
     {% endif %}
   </nav>
@@ -71,17 +85,28 @@
   </div>
 
   {% if request.user.is_authenticated %}
-  <div class="topbar-user-wrap">
+  <div class="topbar-user-wrap dropdown">
     <span class="topbar-username">{{ request.user.username }}</span>
-    {% if request.user.profile_picture %}
-      <img src="{{ request.user.profile_picture.url }}"
-           alt="{{ request.user.username }}"
-           class="topbar-avatar">
-    {% else %}
-      <div class="topbar-avatar-initials">
-        {{ request.user.username|first|upper }}
-      </div>
-    {% endif %}
+    <a href="#"
+       role="button"
+       id="topbarAvatarDropdown"
+       data-bs-toggle="dropdown"
+       aria-expanded="false">
+      {% if request.user.profile_picture %}
+        <img src="{{ request.user.profile_picture.url }}"
+             alt="{{ request.user.username }}"
+             class="topbar-avatar">
+      {% else %}
+        <div class="topbar-avatar-initials">
+          {{ request.user.username|first|upper }}
+        </div>
+      {% endif %}
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="topbarAvatarDropdown">
+      <li><a class="dropdown-item" href="{% url 'update_profile' %}">Update Profile</a></li>
+      <li><hr class="dropdown-divider"></li>
+      <li><a class="dropdown-item" href="{% url 'logout' %}">Logout</a></li>
+    </ul>
   </div>
   {% endif %}
 </header>

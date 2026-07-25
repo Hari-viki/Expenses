@@ -8,8 +8,8 @@
 
   <!-- Header -->
   <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; flex-wrap:wrap; gap:12px;">
-    <h2 style="font-size:20px; font-weight:700; color:#1f2937;">
-      Expense Report
+    <h2 class="report-title">
+        Expense Report
     </h2>
     <button onclick="window.print()" class="btn-primary-app" style="display:flex; align-items:center; gap:6px;">
       🖨 Print / Export
@@ -17,51 +17,59 @@
   </div>
 
   <!-- Filter Card -->
-  <div class="card no-print" style="margin-bottom:1.25rem;">
-    <form method="GET" action="{% url 'report_expense' %}">
-      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:12px; align-items:flex-end;">
+  <div class="card p-3 mb-4 no-print">
+    <form method="GET"
+      action="{% url 'report_expense' %}"
+      class="report-filter">
+        <div class="row g-3 align-items-end">
 
-        <div>
-          <label style="font-size:12px; color:#6b7280; font-weight:600; display:block; margin-bottom:4px;">
-            From Date
-          </label>
-          <input type="date" name="from_date" value="{{ from_date }}">
+            <div class="col-lg-3 col-md-6">
+                <label class="form-label">From Date</label>
+                <input
+                    type="date"
+                    name="from_date"
+                    value="{{ from_date }}"
+                    class="form-control">
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+                <label class="form-label">To Date</label>
+                <input
+                    type="date"
+                    name="to_date"
+                    value="{{ to_date }}"
+                    class="form-control">
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+                <label class="form-label">Bank</label>
+                <select name="bank" class="form-select">
+                    <option value="">All Banks</option>
+                    {% for bank in banks %}
+                    <option value="{{ bank }}"
+                        {% if selected_bank == bank %}selected{% endif %}>
+                        {{ bank }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-lg-3 col-md-6">
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary flex-fill">
+                        Apply
+                    </button>
+
+                    <a href="{% url 'report_expense' %}"
+                       class="btn btn-secondary flex-fill">
+                        Clear
+                    </a>
+                </div>
+            </div>
+
         </div>
-
-        <div>
-          <label style="font-size:12px; color:#6b7280; font-weight:600; display:block; margin-bottom:4px;">
-            To Date
-          </label>
-          <input type="date" name="to_date" value="{{ to_date }}">
-        </div>
-
-        <div>
-          <label style="font-size:12px; color:#6b7280; font-weight:600; display:block; margin-bottom:4px;">
-            Bank
-          </label>
-          <select name="bank">
-            <option value="">-- All Banks --</option>
-            {% for bank in banks %}
-            <option value="{{ bank }}" {% if selected_bank == bank %}selected{% endif %}>
-              {{ bank }}
-            </option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <div style="display:flex; gap:8px;">
-          <button type="submit" class="btn-primary-app" style="flex:1;">
-            Apply
-          </button>
-          <a href="{% url 'report_expense' %}"
-             style="flex:1; background:#f3f4f6; color:#374151; border:none; border-radius:6px; padding:9px 12px; font-size:14px; cursor:pointer; text-align:center; text-decoration:none; display:flex; align-items:center; justify-content:center;">
-            Clear
-          </a>
-        </div>
-
-      </div>
     </form>
-  </div>
+</div>
 
   <!-- Summary Cards -->
   <div class="stat-grid" style="margin-bottom:1.25rem;">

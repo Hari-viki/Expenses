@@ -93,7 +93,20 @@ new Chart(document.getElementById('expensePie'), {
     },
     options: {
         responsive: true,
-        maintainAspectRatio: false
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'right',
+                labels: {
+                    color: '#e5e7eb',
+                    boxWidth: 14,
+                    padding: 12,
+                    font: {
+                        size: 12
+                    }
+                }
+            }
+        }
     }
 });
 
@@ -109,7 +122,20 @@ new Chart(document.getElementById('incomePie'), {
     },
     options: {
         responsive: true,
-        maintainAspectRatio: false
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'right',
+                labels: {
+                    color: '#e5e7eb',
+                    boxWidth: 14,
+                    padding: 12,
+                    font: {
+                        size: 12
+                    }
+                }
+            }
+        }
     }
 });
 

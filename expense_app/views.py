@@ -17,6 +17,7 @@ from django.shortcuts import (
     render
 )
 from django.utils import timezone
+from django.contrib.auth import update_session_auth_hash
 
 from .models import *
 
@@ -56,6 +57,61 @@ def login_view(request):
 def logout_view(request):
     logout(request)
     return redirect('login')
+
+@login_required(login_url="login")
+def update_profile(request):
+    user = request.user
+
+    if request.method == "POST":
+        username = request.POST.get("username", "").strip()
+        email = request.POST.get("email", "").strip()
+        profile_picture = request.FILES.get("profile_picture")
+
+        current_password = request.POST.get("current_password")
+        new_password = request.POST.get("new_password")
+        confirm_password = request.POST.get("confirm_password")
+
+        if not username:
+            messages.error(request, "Username cannot be empty.")
+            return redirect("update_profile")
+
+        user.username = username
+        user.email = email
+
+        if profile_picture:
+            user.profile_picture = profile_picture
+
+        # Change password only if user entered one
+        if new_password or confirm_password:
+
+            if not current_password:
+                messages.error(request, "Please enter your current password.")
+                return redirect("update_profile")
+
+            if not user.check_password(current_password):
+                messages.error(request, "Current password is incorrect.")
+                return redirect("update_profile")
+
+            if new_password != confirm_password:
+                messages.error(request, "New passwords do not match.")
+                return redirect("update_profile")
+
+            if len(new_password) < 8:
+                messages.error(request, "Password must be at least 8 characters.")
+                return redirect("update_profile")
+
+            user.set_password(new_password)
+
+        user.save()
+
+        # Keep the user logged in after changing the password
+        if new_password:
+            update_session_auth_hash(request, user)
+
+        messages.success(request, "Profile updated successfully.")
+        return redirect("update_profile")
+
+    return render(request, "web/update_profile.html", {"user": user})
 
 @login_required(login_url='login')
 def home_page(request):
@@ -103,9 +159,10 @@ def home_view_dashboard(request):
     income_map = {e['date'].strftime("%d %b"): int(e['total']) for e in inc_qs}
     income_data = [income_map.get(label, 0) for label in labels]
 
+    # ✅ Filtered to current month/year now
     pie_exp = (
         ExpensesList.objects
-        .filter(user=request.user, amount__gt=0)
+        .filter(user=request.user, date__month=month, date__year=year, amount__gt=0)
         .values('description')
         .annotate(total=Sum('amount'))
     )
@@ -113,27 +170,30 @@ def home_view_dashboard(request):
     pie_exp_labels = [e['description'] for e in pie_exp]
     pie_exp_values = [int(e['total']) for e in pie_exp]
 
+    # ✅ Filtered to current month/year now
     pie_inc = (
         ExpensesList.objects
-        .filter( user=request.user, extra_amount__gt=0)
+        .filter(user=request.user, date__month=month, date__year=year, extra_amount__gt=0)
         .values('description')
         .annotate(total=Sum('extra_amount'))
     )
 
     pie_inc_labels = [e['description'] for e in pie_inc]
     pie_inc_values = [int(e['total']) for e in pie_inc]
+
+    # total_expense / total_income — decide: should these also be month-only?
     total_expense = (
         ExpensesList.objects
-        .filter(user=request.user, amount__gt=0)
+        .filter(user=request.user, date__month=month, date__year=year, amount__gt=0)
         .aggregate(total=Sum('amount'))['total'] or 0
     )
     total_income = (
         ExpensesList.objects
-        .filter(user=request.user, extra_amount__gt=0)
-        .aggregate(total=Sum('extra_amount')
-        )['total'] or 0
+        .filter(user=request.user, date__month=month, date__year=year, extra_amount__gt=0)
+        .aggregate(total=Sum('extra_amount'))['total'] or 0
     )
     current_balance = total_income - total_expense
+
     return render(request, 'web/home_dashboard.html', {
         'labels': labels,
         'expense_data': expense_data,
@@ -154,6 +214,7 @@ def expenses_view(request):
     month = request.GET.get("month")
     search = request.GET.get("search")
     selected_bank = request.GET.get("bank")
+    date_str = request.POST.get("date")
     expenses = ExpensesList.objects.filter(user=request.user)
     if month:
         expenses = expenses.filter(date__month=month)
@@ -161,6 +222,10 @@ def expenses_view(request):
         expenses = expenses.filter(description__icontains=search)
     if selected_bank:
         expenses = expenses.filter(bank__iexact=selected_bank.strip())
+    if date_str:
+        expense_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    else:
+        expense_date = timezone.localdate()
     expenses = expenses.order_by("-id")
     total = expenses.aggregate(total=Sum("amount"))["total"] or 0
     bank_selection = Bank.objects.all()
@@ -213,7 +278,7 @@ def expenses_view(request):
             total_amount=total_amount,
             balance_amount=balance,
             description=description,
-            date=timezone.now(),
+            date=expense_date,
         )
         new_total = (
             ExpensesList.objects.filter(user=request.user).aggregate(
@@ -223,7 +288,7 @@ def expenses_view(request):
         )
         return JsonResponse(
             {
-                "date": exp.date.strftime("%b %d, %Y"),
+                "date": exp.date.strftime("%d %b %Y"),
                 "total_amount": exp.total_amount,
                 "amount": exp.amount,
                 "extra_amount": float(exp.extra_amount),

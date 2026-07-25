@@ -7,6 +7,7 @@ urlpatterns=[
     path('home_dashboard',views.home_view_dashboard,name='home_dashboard'),
     path('signup', views.signup_view, name='signup'),
     path('login', views.login_view, name='login'),
+     path('profile/update/', views.update_profile, name='update_profile'),
     path('logout', views.logout_view, name='logout'),
     path('expenses', views.expenses_view, name='expenses'),
     path('bike_expenses', views.bike_expenses_view, name='bike_expenses'),
